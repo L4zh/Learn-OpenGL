@@ -4,3 +4,4 @@ Learning OpenGL
 - Texture: Texture Practice.
 - Texture 2: Lights with Texture.
 - Model: Model Loading using Assimp.
+- Deferred Shading: G-Buffer / Deferred Shading.
