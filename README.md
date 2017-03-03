@@ -5,3 +5,4 @@ Learning OpenGL
 - Texture 2: Lights with Texture.
 - Model: Model Loading using Assimp.
 - Deferred Shading: G-Buffer / Deferred Shading.
+- SSAO: Screen Space Ambient Occlusion. A simple demo.
