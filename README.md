@@ -1,4 +1,4 @@
-# Learn-OpenGL
+# Learn OpenGL
 Learning OpenGL
 - Lighting: A Multiple Lights Model.
 - Texture: Texture Practice.
