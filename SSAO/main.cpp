@@ -8,8 +8,10 @@
 
 
 #define GLEW_STATIC
+
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
 #include <iostream>
 #include <vector>
 #include <random>
@@ -17,8 +19,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-
-#include <FreeImage.h>
 
 #include "Shader.h"
 #include "Camera.h"
@@ -38,7 +38,7 @@ void Do_Movement();
 void RenderCube();
 void RenderQuad();
 
-Camera camera(glm::vec3(0.0f, 0.0f, 10.0f));
+Camera camera(glm::vec3(0.0f, 2.0f, 6.0f));
 
 bool keys[1024];
 bool keysPressed[1024];
@@ -51,6 +51,7 @@ GLfloat lerp(GLfloat a, GLfloat b, GLfloat f)
 {
     return a + f * (b - a);
 }
+
 
 
 int main()
@@ -74,33 +75,36 @@ int main()
     glewInit();
     glGetError();
     
+    // Retina Screen
+    /*
     int winW, winH;
     glfwGetFramebufferSize(window, &winW, &winH);
-    // ???
-    //glViewport(0, 0, winW, winH);
+    glViewport(0, 0, winW, winH);
+    */
+    
     glViewport(0, 0, screenWidth, screenHeight);
     
     glEnable(GL_DEPTH_TEST);
     
     
     // 设置 Shader
-    Shader geometryShader("/Users/apple/Documents/Xcode/S_OGL/I_OGL/SSAO/geome.vert",
-                          "/Users/apple/Documents/Xcode/S_OGL/I_OGL/SSAO/geome.frag");
+    Shader geometryShader("/Users/apple/Documents/Xcode/SSAO/geome.vert",
+                          "/Users/apple/Documents/Xcode/SSAO/geome.frag");
     
-    Shader lightShader("/Users/apple/Documents/Xcode/S_OGL/I_OGL/SSAO/light.vert",
-                       "/Users/apple/Documents/Xcode/S_OGL/I_OGL/SSAO/light.frag");
+    Shader lightShader("/Users/apple/Documents/Xcode/SSAO/light.vert",
+                       "/Users/apple/Documents/Xcode/SSAO/light.frag");
     
-    Shader ssaoShader("/Users/apple/Documents/Xcode/S_OGL/I_OGL/SSAO/ssao.vert",
-                      "/Users/apple/Documents/Xcode/S_OGL/I_OGL/SSAO/ssao.frag");
+    Shader ssaoShader("/Users/apple/Documents/Xcode/SSAO/ssao.vert",
+                      "/Users/apple/Documents/Xcode/SSAO/ssao.frag");
     
-    Shader blurShader("/Users/apple/Documents/Xcode/S_OGL/I_OGL/SSAO/blur.vert",
-                      "/Users/apple/Documents/Xcode/S_OGL/I_OGL/SSAO/blur.frag");
+    Shader blurShader("/Users/apple/Documents/Xcode/SSAO/blur.vert",
+                      "/Users/apple/Documents/Xcode/SSAO/blur.frag");
     
     // 设置采样
     lightShader.Use();
     glUniform1i(glGetUniformLocation(lightShader.Program, "gPositionDepth"), 0);
     glUniform1i(glGetUniformLocation(lightShader.Program, "gNormal"), 1);
-    glUniform1i(glGetUniformLocation(lightShader.Program, "gAlbedo"), 2);  // 反射率
+    glUniform1i(glGetUniformLocation(lightShader.Program, "gAlbedo"), 2);
     glUniform1i(glGetUniformLocation(lightShader.Program, "ssao"), 3);
     ssaoShader.Use();
     glUniform1i(glGetUniformLocation(ssaoShader.Program, "gPositionDepth"), 0);
@@ -108,11 +112,10 @@ int main()
     glUniform1i(glGetUniformLocation(ssaoShader.Program, "texNoise"), 2);
     
     // 加载模型
-    Model EVA("/Users/apple/Documents/Xcode/S_OGL/I_OGL/Obj/nanosuit/nanosuit.obj");
-    //Model EVA("/Users/apple/Documents/Xcode/S_OGL/I_OGL/Obj/rock/rock.obj");
+    Model EVA("/Users/apple/Documents/Xcode/SSAO/Obj/buddha.obj");
     
     // 光照位置及颜色
-    glm::vec3 lightPos = glm::vec3(2.0, 0.0, -2.0);
+    glm::vec3 lightPos = glm::vec3(2.0, 1.0, 1.0);
     glm::vec3 lightColor = glm::vec3(1.0, 0.8, 0.2);
 
     
@@ -200,7 +203,8 @@ int main()
     std::vector<glm::vec3> ssaoKernel;
     for (GLuint i = 0; i < 64; ++i)
     {
-        glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0,
+        glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0,
+                         randomFloats(generator) * 2.0 - 1.0,
                          randomFloats(generator));
         sample = glm::normalize(sample);
         sample *= randomFloats(generator);
@@ -213,11 +217,12 @@ int main()
     }
     
     
-    // 加入噪声
     std::vector<glm::vec3> ssaoNoise;
     for (GLuint i = 0; i < 16; ++i)
     {
-        glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f);
+        glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0,
+                        randomFloats(generator) * 2.0 - 1.0,
+                        0.0f);
         ssaoNoise.push_back(noise);
     }
     
@@ -256,17 +261,43 @@ int main()
         	glUniformMatrix4fv(glGetUniformLocation(geometryShader.Program, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
         	glUniformMatrix4fv(glGetUniformLocation(geometryShader.Program, "view"), 1, GL_FALSE, glm::value_ptr(view));
         
-            //model = glm::translate(model, glm::vec3(0.0f, -1.0f, 10.0f));
-            //model = glm::scale(model, glm::vec3(20.0f, 1.0f, 20.0f));
-            //glUniformMatrix4fv(glGetUniformLocation(geometryShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
-            //RenderCube();
+            // 空间
+            model = glm::translate(model, glm::vec3(10.0f, 0.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(1.0f, 50.0f, 50.0f));
+            glUniformMatrix4fv(glGetUniformLocation(geometryShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+            RenderCube();
+            model = glm::mat4();
+            model = glm::translate(model, glm::vec3(-10.0f, 0.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(1.0f, 50.0f, 50.0f));
+            glUniformMatrix4fv(glGetUniformLocation(geometryShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+            RenderCube();
+            model = glm::mat4();
+            model = glm::translate(model, glm::vec3(0.0f, 0.0f, 10.0f));
+            model = glm::scale(model, glm::vec3(50.0f, 50.0f, 1.0f));
+            glUniformMatrix4fv(glGetUniformLocation(geometryShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+            RenderCube();
+            model = glm::mat4();
+            model = glm::translate(model, glm::vec3(0.0f, 0.0f, -10.0f));
+            model = glm::scale(model, glm::vec3(50.0f, 50.0f, 1.0f));
+            glUniformMatrix4fv(glGetUniformLocation(geometryShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+            RenderCube();
+            model = glm::mat4();
+            model = glm::translate(model, glm::vec3(0.0f, 10.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(50.0f, 1.0f, 50.0f));
+            glUniformMatrix4fv(glGetUniformLocation(geometryShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+            RenderCube();
+            // 地板
+            model = glm::mat4();
+            model = glm::translate(model, glm::vec3(0.0, -1.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(50.0f, 1.0f, 50.0f));
+            glUniformMatrix4fv(glGetUniformLocation(geometryShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
+            RenderCube();
         
             // 模型
             model = glm::mat4();
-            model = glm::translate(model, glm::vec3(0.0f, -6.0f, -2.0f));
-            model = glm::rotate(model, -45.0f, glm::vec3(0.0f, 0.0f, 1.0f));
-            model = glm::rotate(model, 45.0f, glm::vec3(0.0, 0.0, 1.0));
-            model = glm::scale(model, glm::vec3(0.8f));
+            model = glm::translate(model, glm::vec3(0.0f, 2.0f, -2.0f));
+            model = glm::rotate(model, -60.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+            model = glm::scale(model, glm::vec3(5.0f));
             glUniformMatrix4fv(glGetUniformLocation(geometryShader.Program, "model"), 1, GL_FALSE, glm::value_ptr(model));
             EVA.Draw(geometryShader);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -315,7 +346,7 @@ int main()
         glUniform3fv(glGetUniformLocation(lightShader.Program, "light.Position"), 1, &lightPosView[0]);
         glUniform3fv(glGetUniformLocation(lightShader.Program, "light.Color"), 1, &lightColor[0]);
         
-        const GLfloat constant = 1.0;
+        //const GLfloat constant = 1.0;
         const GLfloat linear = 0.09;
         const GLfloat quadratic = 0.032;
         //glUniform1f(glGetUniformLocation(lightShader.Program, "light.Constant"), constant);
